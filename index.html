@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>刷题学习</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: -apple-system, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif; background: #f4f5f7; color: #222; }
+  .wrap { max-width: 640px; margin: 0 auto; padding: 0 14px 40px; }
+  .topbar { position: sticky; top: 0; z-index: 10; background: #fff; border-bottom: 1px solid #e5e5e5; }
+  .topbar-inner { max-width: 640px; margin: 0 auto; padding: 10px 14px; display: flex; align-items: center; gap: 10px; }
+  .topbar-inner .title { font-size: 18px; font-weight: 700; }
+  .topbar-inner .spacer { flex: 1; }
+  .userchip { display: flex; align-items: center; gap: 6px; font-size: 14px; }
+  .userchip .av { font-size: 22px; }
+  button { font-size: 16px; border: 1px solid #ddd; background: #fff; border-radius: 10px; padding: 10px 14px; cursor: pointer; }
+  button.primary { background: #1677ff; color: #fff; border-color: #1677ff; }
+  button.small { font-size: 14px; padding: 7px 12px; }
+  button:disabled { opacity: .5; }
+  .nav { display: flex; gap: 8px; padding: 12px 0; }
+  .nav button { flex: 1; }
+  .nav button.active { background: #1677ff; color: #fff; border-color: #1677ff; }
+  .card { background: #fff; border-radius: 12px; padding: 16px; margin-bottom: 12px; }
+  .card h2 { margin: 0 0 12px; font-size: 17px; }
+  .muted { color: #888; font-size: 13px; }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .preset { min-width: 56px; }
+  .preset.active { background: #1677ff; color: #fff; border-color: #1677ff; }
+  input[type="number"], input[type="text"] { font-size: 16px; border: 1px solid #ddd; border-radius: 10px; padding: 10px 12px; width: 100%; }
+  .field { margin-bottom: 12px; }
+  .field label { display: block; margin-bottom: 6px; font-size: 14px; color: #555; }
+  .avatar-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+  .avatar-grid button { font-size: 26px; width: 52px; height: 52px; padding: 0; }
+  .avatar-grid button.active { border-color: #1677ff; background: #eaf3ff; }
+  .user-list { display: flex; flex-direction: column; gap: 10px; }
+  .user-list button { display: flex; align-items: center; gap: 12px; text-align: left; font-size: 17px; }
+  .user-list .av { font-size: 30px; }
+  .progress { font-size: 14px; color: #555; margin-bottom: 10px; }
+  .bar { height: 8px; background: #eee; border-radius: 4px; overflow: hidden; margin-bottom: 14px; }
+  .bar > div { height: 100%; background: #1677ff; width: 0; }
+  .qtext { font-size: 17px; line-height: 1.7; margin-bottom: 14px; white-space: pre-wrap; }
+  .tag { display: inline-block; font-size: 12px; background: #eef2ff; color: #3b5bdb; border-radius: 6px; padding: 2px 8px; margin-bottom: 10px; }
+  .opt { display: block; width: 100%; text-align: left; margin-bottom: 10px; padding: 13px 14px; font-size: 16px; line-height: 1.5; }
+  .opt .letter { font-weight: 700; margin-right: 8px; }
+  .opt.selected { border-color: #1677ff; background: #eaf3ff; }
+  .opt.correct { background: #d9f7d9 !important; border-color: #2da44e !important; color: #14532d; }
+  .opt.wrong { background: #fde3e3 !important; border-color: #d33 !important; color: #7f1d1d; }
+  .opt:disabled { opacity: 1; }
+  .feedback { font-size: 16px; font-weight: 700; margin: 12px 0; }
+  .feedback.ok { color: #1a7f37; }
+  .feedback.no { color: #c0392b; }
+  .big-num { font-size: 30px; font-weight: 700; }
+  .stats { display: flex; gap: 10px; }
+  .stats .card { flex: 1; text-align: center; margin-bottom: 0; }
+  .mistake-item { border-bottom: 1px solid #eee; padding: 12px 0; }
+  .mistake-item:last-child { border-bottom: none; }
+  .mistake-q { font-size: 15px; line-height: 1.6; }
+  .answer-box { background: #f6f8fa; border-radius: 8px; padding: 10px 12px; margin-top: 8px; font-size: 14px; line-height: 1.7; white-space: pre-wrap; }
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+<div class="topbar"><div class="topbar-inner">
+  <span class="title">刷题学习</span>
+  <span class="spacer"></span>
+  <span class="userchip" id="topUser"></span>
+  <button class="small" id="btnSwitchUser">切换用户</button>
+</div></div>
+
+<div class="wrap">
+  <!-- 用户选择 -->
+  <section id="view-gate" class="hidden">
+    <div class="card"><h2>选择用户</h2>
+      <p class="muted">点一下自己的头像和名字就进入，不用密码。数据只存在你自己的浏览器里。</p>
+      <div class="user-list" id="userList"></div>
+    </div>
+    <div class="card" id="createCard"><h2>新建用户</h2>
+      <div class="field"><label>选一个头像</label><div class="avatar-grid" id="avatarGrid"></div></div>
+      <div class="field"><label>名字</label><input type="text" id="newName" placeholder="输入名字" maxlength="20"></div>
+      <button class="primary" id="btnCreateUser" style="width:100%">创建并进入</button>
+      <p class="muted" id="createNote"></p>
+    </div>
+  </section>
+
+  <!-- 首页 -->
+  <section id="view-home" class="hidden">
+    <div class="stats">
+      <div class="card"><div class="muted">累计训练</div><div class="big-num" id="statTrainings">0</div></div>
+      <div class="card"><div class="muted">累计答题</div><div class="big-num" id="statAnswered">0</div></div>
+      <div class="card"><div class="muted">总正确率</div><div class="big-num" id="statRate">-</div></div>
+    </div>
+    <div class="card"><h2>开始刷题</h2>
+      <div class="field"><label>本次题数</label>
+        <div class="row" id="presetRow">
+          <button class="preset" data-n="10">10</button>
+          <button class="preset active" data-n="20">20</button>
+          <button class="preset" data-n="50">50</button>
+        </div>
+      </div>
+      <div class="field"><label>自定义题数</label><input type="number" id="customCount" min="1" max="1458" placeholder="留空则用上面选的题数"></div>
+      <div class="field"><label>模式</label>
+        <div class="row" id="modeRow">
+          <button class="preset active" data-mode="mixed">随机混合</button>
+          <button class="preset" data-mode="order">顺序</button>
+          <button class="preset" data-mode="review">错题复习</button>
+        </div>
+      </div>
+      <p class="muted">随机混合：每次从全部题库里随机抽题，单选、多选、判断、不定项四种题都会出现，顺序打乱。</p>
+      <button class="primary" id="btnStart" style="width:100%">开始刷题</button>
+      <p class="muted" id="startNote"></p>
+    </div>
+    <div class="nav">
+      <button id="navMistakes">错题本</button>
+      <button id="navBank">题库</button>
+    </div>
+    <p class="muted">题库共 1458 道，所有用户共用；训练记录和错题本只属于当前用户。</p>
+  </section>
+
+  <!-- 答题 -->
+  <section id="view-quiz" class="hidden">
+    <div class="card">
+      <div class="progress" id="quizProgress"></div>
+      <div class="bar"><div id="quizBar"></div></div>
+      <span class="tag" id="quizType"></span>
+      <div class="qtext" id="quizQ"></div>
+      <div id="quizOpts"></div>
+      <div class="feedback hidden" id="quizFeedback"></div>
+      <div class="row hidden" id="quizActions">
+        <button class="primary hidden" id="btnSubmitMulti">提交</button>
+        <button class="primary hidden" id="btnNext" style="flex:1">下一题</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- 成绩 -->
+  <section id="view-results" class="hidden">
+    <div class="card"><h2>本次训练完成</h2>
+      <div class="stats">
+        <div class="card"><div class="muted">答对</div><div class="big-num" id="resCorrect">0</div></div>
+        <div class="card"><div class="muted">答错</div><div class="big-num" id="resWrong">0</div></div>
+        <div class="card"><div class="muted">正确率</div><div class="big-num" id="resRate">-</div></div>
+      </div>
+      <p style="margin-top:14px">用时：<span id="resTime"></span></p>
+      <p>累计已完成训练：<strong id="resTrainings"></strong> 次</p>
+      <div class="row">
+        <button class="primary" id="btnAgain" style="flex:1">再练一次</button>
+        <button id="btnHome" style="flex:1">回首页</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- 错题本 -->
+  <section id="view-mistakes" class="hidden">
+    <div class="card"><h2>错题本</h2>
+      <p class="muted" id="mistakeSummary"></p>
+      <div class="row" style="margin-bottom:12px">
+        <button class="primary" id="btnReviewMistakes">练错题</button>
+        <button id="btnMistakesHome">回首页</button>
+      </div>
+      <div id="mistakeList"></div>
+    </div>
+  </section>
+
+  <!-- 题库 -->
+  <section id="view-bank" class="hidden">
+    <div class="card"><h2>题库</h2>
+      <div class="field"><input type="text" id="bankSearch" placeholder="搜索题目文字"></div>
+      <div class="field"><div class="row" id="bankTypeRow">
+        <button class="preset active" data-t="">全部</button>
+        <button class="preset" data-t="single">单选</button>
+        <button class="preset" data-t="multiple">多选</button>
+        <button class="preset" data-t="truefalse">判断</button>
+        <button class="preset" data-t="不定项">不定项</button>
+      </div></div>
+      <p class="muted" id="bankCount"></p>
+      <div id="bankList"></div>
+    </div>
+    <button id="btnBankHome" style="width:100%">回首页</button>
+  </section>
+</div>
+
+<script>
+const TYPE_LABEL = { single: '单选', multiple: '多选', truefalse: '判断', '不定项': '不定项' };
+const TYPE_ORDER = ['single', 'multiple', 'truefalse', '不定项'];
+const AVATARS = ['🐼', '🐶', '🐱', '🐭', '🐹', '🐰', '🦊', '🐻', '🐨', '🐯', '🦁', '🐮'];
+const STORE_KEY = 'quizPracticeV1';
+let BANK = [];
+let store = loadStore();
+let currentUserId = store.currentUserId || (store.users[0] && store.users[0].id) || null;
+let quiz = null;
+let pickedAvatar = AVATARS[0];
+let pickedCount = 20;
+let pickedMode = 'mixed';
+let bankType = '';
+
+function loadStore() {
+  try {
+    const raw = localStorage.getItem(STORE_KEY);
+    if (raw) { const s = JSON.parse(raw); if (s && s.users) return s; }
+  } catch (e) {}
+  return { users: [{ id: 'default', name: '默认用户', avatar: '🐼' }], currentUserId: 'default', data: {} };
+}
+function saveStore() { try { localStorage.setItem(STORE_KEY, JSON.stringify(store)); } catch (e) {} }
+function userData(uid) {
+  if (!store.data[uid]) store.data[uid] = { trainings: 0, answered: 0, correct: 0, mistakes: {}, sessions: [] };
+  return store.data[uid];
+}
+function currentUser() { return store.users.find(u => u.id === currentUserId) || store.users[0]; }
+function showView(id) {
+  ['view-gate', 'view-home', 'view-quiz', 'view-results', 'view-mistakes', 'view-bank'].forEach(v => {
+    document.getElementById(v).classList.toggle('hidden', v !== id);
+  });
+  window.scrollTo(0, 0);
+}
+function el(tag, text, cls) {
+  const n = document.createElement(tag);
+  if (text !== undefined && text !== null) n.textContent = text;
+  if (cls) n.className = cls;
+  return n;
+}
+function lettersFor(n) { return Array.from({ length: n }, (_, i) => String.fromCharCode(65 + i)); }
+function shuffle(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
+  return a;
+}
+function fmtTime(ms) {
+  const s = Math.round(ms / 1000);
+  return Math.floor(s / 60) + '分' + (s % 60) + '秒';
+}
+function fmtDate(ts) {
+  const d = new Date(ts);
+  const p = n => String(n).padStart(2, '0');
+  return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) + ' ' + p(d.getHours()) + ':' + p(d.getMinutes());
+}
+</script>
+<script>
+// ---- 用户选择 ----
+function renderGate() {
+  const list = document.getElementById('userList');
+  list.innerHTML = '';
+  store.users.forEach(u => {
+    const b = document.createElement('button');
+    const av = el('span', u.avatar, 'av');
+    const nm = el('span', u.name);
+    b.appendChild(av); b.appendChild(nm);
+    b.onclick = () => { currentUserId = u.id; store.currentUserId = u.id; saveStore(); enterApp(); };
+    list.appendChild(b);
+  });
+  const grid = document.getElementById('avatarGrid');
+  grid.innerHTML = '';
+  AVATARS.forEach(a => {
+    const b = el('button', a);
+    if (a === pickedAvatar) b.classList.add('active');
+    b.onclick = () => { pickedAvatar = a; grid.querySelectorAll('button').forEach(x => x.classList.toggle('active', x.textContent === a)); };
+    grid.appendChild(b);
+  });
+  const full = store.users.length >= 10;
+  document.getElementById('createCard').classList.toggle('hidden', full);
+  document.getElementById('createNote').textContent = full ? '用户已满 10 个，不能再新建。' : '';
+}
+document.getElementById('btnCreateUser').onclick = () => {
+  const name = document.getElementById('newName').value.trim();
+  if (!name) { alert('请先输入名字'); return; }
+  if (store.users.length >= 10) { alert('用户已满 10 个，不能再新建。'); return; }
+  const u = { id: 'u' + Date.now(), name: name, avatar: pickedAvatar };
+  store.users.push(u);
+  currentUserId = u.id; store.currentUserId = u.id;
+  saveStore(); enterApp();
+};
+document.getElementById('btnSwitchUser').onclick = () => { renderGate(); showView('view-gate'); };
+
+function enterApp() {
+  const u = currentUser();
+  const top = document.getElementById('topUser');
+  top.innerHTML = '';
+  top.appendChild(el('span', u.avatar, 'av'));
+  top.appendChild(el('span', u.name));
+  renderHome();
+  showView('view-home');
+}
+
+// ---- 首页 ----
+function renderHome() {
+  const d = userData(currentUserId);
+  document.getElementById('statTrainings').textContent = d.trainings;
+  document.getElementById('statAnswered').textContent = d.answered;
+  document.getElementById('statRate').textContent = d.answered ? Math.round(d.correct / d.answered * 100) + '%' : '-';
+  document.getElementById('startNote').textContent = BANK.length ? ('题库共 ' + BANK.length + ' 道。') : '题库正在加载……';
+  document.getElementById('btnStart').disabled = BANK.length === 0;
+}
+document.getElementById('presetRow').querySelectorAll('button').forEach(b => {
+  b.onclick = () => {
+    pickedCount = parseInt(b.dataset.n, 10);
+    document.getElementById('presetRow').querySelectorAll('button').forEach(x => x.classList.toggle('active', x === b));
+    document.getElementById('customCount').value = '';
+  };
+});
+document.getElementById('modeRow').querySelectorAll('button').forEach(b => {
+  b.onclick = () => {
+    pickedMode = b.dataset.mode;
+    document.getElementById('modeRow').querySelectorAll('button').forEach(x => x.classList.toggle('active', x === b));
+  };
+});
+document.getElementById('btnStart').onclick = () => {
+  const custom = parseInt(document.getElementById('customCount').value, 10);
+  const count = custom > 0 ? custom : pickedCount;
+  startQuiz(pickedMode, count);
+};
+document.getElementById('navMistakes').onclick = () => { renderMistakes(); showView('view-mistakes'); };
+document.getElementById('navBank').onclick = () => { renderBank(); showView('view-bank'); };
+
+// ---- 抽题 ----
+function sampleMixed(count) {
+  const byType = {};
+  TYPE_ORDER.forEach(t => byType[t] = []);
+  BANK.forEach((q, i) => { if (byType[q.type]) byType[q.type].push(i); });
+  const types = TYPE_ORDER.filter(t => byType[t].length > 0);
+  const n = Math.min(count, BANK.length);
+  const picked = new Set();
+  if (n >= 4) {
+    const base = n >= 20 ? 2 : 1;
+    types.forEach(t => {
+      shuffle(byType[t]).slice(0, base).forEach(i => picked.add(i));
+    });
+  }
+  shuffle(BANK.map((_, i) => i)).forEach(i => { if (picked.size < n) picked.add(i); });
+  return shuffle(Array.from(picked));
+}
+function startQuiz(mode, count) {
+  const d = userData(currentUserId);
+  let list = [];
+  if (mode === 'review') {
+    const keys = Object.keys(d.mistakes);
+    if (!keys.length) { alert('错题本是空的，先去刷题吧。'); return; }
+    list = shuffle(keys.map(k => parseInt(k, 10)).filter(i => BANK[i]));
+    if (count > 0) list = list.slice(0, count);
+  } else if (mode === 'order') {
+    list = BANK.map((_, i) => i).slice(0, Math.min(count, BANK.length));
+  } else {
+    list = sampleMixed(count);
+  }
+  if (!list.length) { alert('没有可练习的题目。'); return; }
+  quiz = { list: list, pos: 0, correct: 0, wrong: 0, mode: mode, startTime: Date.now(), judged: false, selected: new Set() };
+  renderQuiz();
+  showView('view-quiz');
+}
+
+// ---- 答题 ----
+function renderQuiz() {
+  const idx = quiz.list[quiz.pos];
+  const q = BANK[idx];
+  quiz.judged = false;
+  quiz.selected = new Set();
+  document.getElementById('quizProgress').textContent = '第 ' + (quiz.pos + 1) + ' / ' + quiz.list.length + ' 题';
+  document.getElementById('quizBar').style.width = Math.round(quiz.pos / quiz.list.length * 100) + '%';
+  document.getElementById('quizType').textContent = TYPE_LABEL[q.type] || q.type;
+  document.getElementById('quizQ').textContent = q.question;
+  const box = document.getElementById('quizOpts');
+  box.innerHTML = '';
+  const letters = lettersFor(q.options.length);
+  const multi = q.type === 'multiple' || q.type === '不定项';
+  q.options.forEach((opt, i) => {
+    const b = document.createElement('button');
+    b.className = 'opt';
+    b.appendChild(el('span', letters[i], 'letter'));
+    b.appendChild(document.createTextNode(opt));
+    b.dataset.letter = letters[i];
+    b.onclick = () => {
+      if (quiz.judged) return;
+      if (multi) {
+        if (quiz.selected.has(letters[i])) { quiz.selected.delete(letters[i]); b.classList.remove('selected'); }
+        else { quiz.selected.add(letters[i]); b.classList.add('selected'); }
+      } else {
+        quiz.lastPick = letters[i];
+        judgeSingle(letters[i]);
+      }
+    };
+    box.appendChild(b);
+  });
+  const fb = document.getElementById('quizFeedback');
+  fb.classList.add('hidden'); fb.textContent = '';
+  const actions = document.getElementById('quizActions');
+  actions.classList.remove('hidden');
+  const submit = document.getElementById('btnSubmitMulti');
+  const next = document.getElementById('btnNext');
+  submit.classList.toggle('hidden', !multi);
+  next.classList.add('hidden');
+  next.textContent = quiz.pos + 1 >= quiz.list.length ? '看成绩' : '下一题';
+}
+document.getElementById('btnSubmitMulti').onclick = () => {
+  if (quiz.judged) return;
+  const idx = quiz.list[quiz.pos];
+  const q = BANK[idx];
+  const selected = Array.from(quiz.selected).sort().join('');
+  judge(selected === q.answer, idx);
+};
+function judgeSingle(letter) {
+  const idx = quiz.list[quiz.pos];
+  const q = BANK[idx];
+  judge(letter === q.answer, idx);
+}
+function judge(isCorrect, idx) {
+  const q = BANK[idx];
+  const d = userData(currentUserId);
+  quiz.judged = true;
+  d.answered += 1;
+  const box = document.getElementById('quizOpts');
+  const correctSet = new Set(q.answer.split(''));
+  const multi = q.type === 'multiple' || q.type === '不定项';
+  box.querySelectorAll('button').forEach(b => {
+    const L = b.dataset.letter;
+    b.disabled = true;
+    if (correctSet.has(L)) b.classList.add('correct');
+    if (!isCorrect) {
+      if (multi) {
+        if (quiz.selected.has(L) && !correctSet.has(L)) b.classList.add('wrong');
+      } else if (quiz.lastPick && L === quiz.lastPick) {
+        b.classList.add('wrong');
+      }
+    }
+  });
+  const fb = document.getElementById('quizFeedback');
+  fb.classList.remove('hidden');
+  if (isCorrect) {
+    quiz.correct += 1; d.correct += 1;
+    fb.textContent = '回答正确'; fb.className = 'feedback ok';
+    if (quiz.mode === 'review' && d.mistakes[idx]) {
+      d.mistakes[idx].n -= 1;
+      if (d.mistakes[idx].n <= 0) delete d.mistakes[idx];
+    }
+  } else {
+    quiz.wrong += 1;
+    fb.textContent = '回答错误，正确答案已标绿'; fb.className = 'feedback no';
+    if (!d.mistakes[idx]) d.mistakes[idx] = { n: 0, last: 0 };
+    d.mistakes[idx].n += 1;
+    d.mistakes[idx].last = Date.now();
+  }
+  saveStore();
+  document.getElementById('btnSubmitMulti').classList.add('hidden');
+  document.getElementById('btnNext').classList.remove('hidden');
+}
+document.getElementById('btnNext').onclick = () => {
+  quiz.lastPick = null;
+  if (quiz.pos + 1 >= quiz.list.length) { finishQuiz(); return; }
+  quiz.pos += 1;
+  renderQuiz();
+};
+function finishQuiz() {
+  const d = userData(currentUserId);
+  d.trainings += 1;
+  const total = quiz.correct + quiz.wrong;
+  d.sessions.unshift({ date: Date.now(), count: total, correct: quiz.correct, mode: quiz.mode });
+  d.sessions = d.sessions.slice(0, 50);
+  saveStore();
+  document.getElementById('resCorrect').textContent = quiz.correct;
+  document.getElementById('resWrong').textContent = quiz.wrong;
+  document.getElementById('resRate').textContent = total ? Math.round(quiz.correct / total * 100) + '%' : '-';
+  document.getElementById('resTime').textContent = fmtTime(Date.now() - quiz.startTime);
+  document.getElementById('resTrainings').textContent = d.trainings;
+  showView('view-results');
+}
+document.getElementById('btnAgain').onclick = () => { renderHome(); showView('view-home'); };
+document.getElementById('btnHome').onclick = () => { renderHome(); showView('view-home'); };
+</script>
+<script>
+// ---- 错题本 ----
+function renderMistakes() {
+  const d = userData(currentUserId);
+  const entries = Object.keys(d.mistakes).map(k => ({ idx: parseInt(k, 10), n: d.mistakes[k].n, last: d.mistakes[k].last }))
+    .filter(e => BANK[e.idx] && e.n > 0)
+    .sort((a, b) => b.n - a.n || b.last - a.last);
+  document.getElementById('mistakeSummary').textContent = entries.length
+    ? ('共 ' + entries.length + ' 道错题，按错的次数从多到少排列。复习时答对一次，错次减一，减到 0 自动移出。')
+    : '错题本是空的，做错的题会自动记到这里。';
+  document.getElementById('btnReviewMistakes').disabled = !entries.length;
+  const list = document.getElementById('mistakeList');
+  list.innerHTML = '';
+  entries.forEach(e => {
+    const q = BANK[e.idx];
+    const item = el('div', null, 'mistake-item');
+    item.appendChild(el('div', q.question, 'mistake-q'));
+    const meta = el('div', '错 ' + e.n + ' 次 · 最近错于 ' + fmtDate(e.last), 'muted');
+    item.appendChild(meta);
+    const ans = el('div', null, 'answer-box hidden');
+    const letters = lettersFor(q.options.length);
+    ans.textContent = '正确答案：' + q.answer + '\n' + q.options.map((o, i) => letters[i] + '. ' + o).join('\n');
+    const toggle = el('button', '看正确答案', 'small');
+    toggle.onclick = () => { const h = ans.classList.toggle('hidden'); toggle.textContent = h ? '看正确答案' : '收起'; };
+    item.appendChild(ans);
+    const row = el('div', null, 'row');
+    row.style.marginTop = '8px';
+    row.appendChild(toggle);
+    item.appendChild(row);
+    list.appendChild(item);
+  });
+}
+document.getElementById('btnReviewMistakes').onclick = () => startQuiz('review', 0);
+document.getElementById('btnMistakesHome').onclick = () => { renderHome(); showView('view-home'); };
+
+// ---- 题库 ----
+function renderBank() {
+  const kw = (document.getElementById('bankSearch').value || '').trim();
+  const rows = BANK.map((q, i) => ({ q: q, i: i })).filter(r => {
+    if (bankType && r.q.type !== bankType) return false;
+    if (kw && r.q.question.indexOf(kw) === -1) return false;
+    return true;
+  });
+  document.getElementById('bankCount').textContent = '共 ' + rows.length + ' 道' + (rows.length > 100 ? '（仅显示前 100 条）' : '') + '，仅供浏览，不是练题入口。';
+  const list = document.getElementById('bankList');
+  list.innerHTML = '';
+  rows.slice(0, 100).forEach(r => {
+    const item = el('div', null, 'mistake-item');
+    item.appendChild(el('span', TYPE_LABEL[r.q.type] || r.q.type, 'tag'));
+    item.appendChild(el('div', r.q.question, 'mistake-q'));
+    const ans = el('div', null, 'answer-box hidden');
+    const letters = lettersFor(r.q.options.length);
+    ans.textContent = '正确答案：' + r.q.answer + '\n' + r.q.options.map((o, i) => letters[i] + '. ' + o).join('\n');
+    const toggle = el('button', '看答案', 'small');
+    toggle.onclick = () => { const h = ans.classList.toggle('hidden'); toggle.textContent = h ? '看答案' : '收起'; };
+    const row = el('div', null, 'row');
+    row.style.marginTop = '8px';
+    row.appendChild(toggle);
+    item.appendChild(ans);
+    item.appendChild(row);
+    list.appendChild(item);
+  });
+}
+document.getElementById('bankSearch').addEventListener('input', renderBank);
+document.getElementById('bankTypeRow').querySelectorAll('button').forEach(b => {
+  b.onclick = () => {
+    bankType = b.dataset.t;
+    document.getElementById('bankTypeRow').querySelectorAll('button').forEach(x => x.classList.toggle('active', x === b));
+    renderBank();
+  };
+});
+document.getElementById('btnBankHome').onclick = () => { renderHome(); showView('view-home'); };
+
+// ---- 启动 ----
+fetch('questions.json').then(r => {
+  if (!r.ok) throw new Error('HTTP ' + r.status);
+  return r.json();
+}).then(data => {
+  BANK = data;
+  renderHome();
+}).catch(() => {
+  document.getElementById('startNote').textContent = '题库加载失败：请确认 questions.json 与 index.html 在同一目录下，并用 http(s) 打开本站。';
+  document.getElementById('btnStart').disabled = true;
+});
+renderGate();
+showView('view-gate');
+</script>
+</body>
+</html>
